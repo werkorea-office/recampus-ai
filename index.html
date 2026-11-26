@@ -3,276 +3,1758 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>대학 복학·수료생 발굴 지원 워크스페이스 (분리형 MVP)</title>
+  <title>ReCampus AI (리캠퍼스 AI) — 대학 학사·등록금 회복 인텔리전스 플랫폼</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Pretendard Font -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SheetJS (Real Excel .xlsx/.xls & CSV Parsing) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+          },
+          colors: {
+            midnight: '#0F172A',
+            surface: '#F8FAFC',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+      -webkit-font-smoothing: antialiased;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Custom Subtle Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+    /* Custom Range Slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #E2E8F0;
+      height: 6px;
+      border-radius: 9999px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4F46E5;
+      cursor: pointer;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+    }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen">
-  <div class="max-w-7xl mx-auto p-4 md:p-6">
-    <!-- 상단 헤더 -->
-    <div class="bg-white rounded-xl border border-slate-200 p-5 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-      <div>
-        <div class="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 mb-1">
-          개인정보 서버 미저장 · 학교-시스템 완전 분리 구조
+<body class="min-h-screen flex flex-col lg:flex-row overflow-x-hidden selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none max-w-sm"></div>
+
+  <!-- =========================================================================
+       1. SLEEK EXECUTIVE ENTRY GATE (Modal Overlay)
+  ========================================================================== -->
+  <div id="entryGateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md transition-opacity duration-300">
+    <div class="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden">
+      <!-- Top Hero Banner -->
+      <div class="relative bg-slate-900 px-8 pt-8 pb-7 text-white overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-indigo-500/20 blur-2xl pointer-events-none"></div>
+        <div class="absolute -left-10 -bottom-10 w-40 h-40 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none"></div>
+
+        <div class="relative flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+              <i data-lucide="graduation-cap" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <span class="font-bold text-lg tracking-tight">ReCampus AI</span>
+              <span class="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">ENTERPRISE</span>
+            </div>
+          </div>
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Zero-Server PII 분리 구조
+          </span>
         </div>
-        <h1 class="text-xl md:text-2xl font-bold text-slate-900">
-          복학·수료생 대상 선별 및 교내 결재 워크스페이스
+
+        <h1 class="relative text-2xl font-bold tracking-tight leading-snug">
+          대학 학사·등록금 회복<br />인텔리전스 플랫폼
         </h1>
-        <p class="text-xs md:text-sm text-slate-500 mt-0.5">
-          실명·연락처는 브라우저 로컬 메모리에만 유지되고, 비식별 학사 지표만 분석하여 안내 초안과 결재 흐름을 지원합니다.
+        <p class="relative text-xs text-slate-300 mt-2.5 leading-relaxed">
+          휴학·수료·미등록제적 학적 데이터를 브라우저 로컬 메모리에서 즉시 분석하여, 개인정보 외부 전송 없이 복학·학위취득 타겟 선별과 교내 결재 승인까지 원스톱으로 지원합니다.
         </p>
       </div>
-      <div class="flex flex-wrap gap-2">
-        <button id="btnSample" type="button" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium">
-          시연용 샘플 불러오기
-        </button>
-        <button id="btnAnalyze" type="button" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">
-          대상 선별 및 초안 생성
-        </button>
-      </div>
-    </div>
 
-    <!-- 학사 ERP 스타일 조회·기준 바 -->
-    <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1">대학명</label>
-        <input id="univName" type="text" value="충청미래대학교" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1">연간 기준 등록금 (원)</label>
-        <input id="tuitionKrw" type="number" value="6800000" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1">학적구분 필터</label>
-        <select id="filterStatus" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm bg-white">
-          <option value="ALL">전체 (수료·휴학·제적·자퇴)</option>
-          <option value="수료">수료</option>
-          <option value="일반휴학">일반휴학</option>
-          <option value="미등록제적">미등록제적</option>
-          <option value="자퇴">자퇴</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1">최소 이수율 (%)</label>
-        <input id="minRate" type="number" value="0" min="0" max="100" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1">CSV 업로드 (선택)</label>
-        <input id="csvFile" type="file" accept=".csv" class="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs bg-slate-50" />
-      </div>
-    </div>
+      <!-- Entry Form Body -->
+      <div class="p-8 space-y-5">
+        <div>
+          <label for="gateUnivName" class="block text-xs font-semibold text-slate-700 mb-1.5">시연 및 분석 대상 대학명</label>
+          <div class="relative">
+            <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input id="gateUnivName" type="text" value="충청미래대학교" class="w-full pl-10 pr-4 py-2.5 text-sm font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" />
+          </div>
+        </div>
 
-    <!-- 요약 카드 -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      <div class="bg-white rounded-xl border border-slate-200 p-4">
-        <div class="text-xs text-slate-500">조회 대상 인원</div>
-        <div id="mTotal" class="text-2xl font-bold mt-1">0명</div>
-      </div>
-      <div class="bg-white rounded-xl border border-slate-200 p-4">
-        <div class="text-xs text-slate-500">최우선(S) / 유망(A)</div>
-        <div id="mSA" class="text-2xl font-bold text-blue-600 mt-1">0 / 0명</div>
-      </div>
-      <div class="bg-white rounded-xl border border-slate-200 p-4">
-        <div class="text-xs text-slate-500">보수적 예상 등록 인원</div>
-        <div id="mEnroll" class="text-2xl font-bold text-emerald-600 mt-1">0명</div>
-      </div>
-      <div class="bg-white rounded-xl border border-slate-200 p-4">
-        <div class="text-xs text-slate-500">예상 성과보수 (20% 기준)</div>
-        <div id="mFee" class="text-2xl font-bold text-indigo-600 mt-1">0원</div>
-      </div>
-    </div>
+        <div class="grid grid-cols-3 gap-2.5 text-center">
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <div class="text-[11px] text-slate-500 font-medium">개인정보 보호</div>
+            <div class="text-xs font-bold text-emerald-700 mt-0.5">100% 로컬 격리</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <div class="text-[11px] text-slate-500 font-medium">지원 파일 형식</div>
+            <div class="text-xs font-bold text-slate-800 mt-0.5">XLSX · XLS · CSV</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <div class="text-[11px] text-slate-500 font-medium">연간 기준 등록금</div>
+            <div class="text-xs font-bold text-indigo-700 mt-0.5 tabular-nums">6,800,000원</div>
+          </div>
+        </div>
 
-    <!-- 결재 액션 바 -->
-    <div class="bg-white rounded-xl border border-slate-200 p-3.5 mb-4 flex flex-wrap items-center justify-between gap-2">
-      <div class="text-xs text-slate-600">
-        체크된 대상자에 대해 <strong>실무자 검토 → 처장/단장 결재 승인</strong> 상태를 반영합니다. (실제 발송은 학교 발송망에서 진행)
-      </div>
-      <div class="flex gap-2">
-        <button id="btnApprove" type="button" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">
-          선택 항목 결재 승인
+        <button id="btnEnterWorkspace" type="button" class="w-full py-3.5 px-5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2 cursor-pointer">
+          <span>원클릭 데모 워크스페이스 입장</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </button>
-        <button id="btnExport" type="button" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold">
-          승인 목록 CSV 내보내기
-        </button>
-      </div>
-    </div>
 
-    <!-- 그리드 테이블 -->
-    <div class="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-      <table class="w-full text-left border-collapse text-sm">
-        <thead class="bg-slate-50 border-b border-slate-200 text-xs text-slate-600">
-          <tr>
-            <th class="p-3 w-10"><input id="checkAll" type="checkbox" /></th>
-            <th class="p-3">식별키(비식별)</th>
-            <th class="p-3">학과</th>
-            <th class="p-3">학적구분</th>
-            <th class="p-3">이수/기준(잔여)</th>
-            <th class="p-3">경과/평점</th>
-            <th class="p-3">우선순위</th>
-            <th class="p-3">결재상태</th>
-            <th class="p-3 min-w-[300px]">맞춤 안내 초안</th>
-          </tr>
-        </thead>
-        <tbody id="gridBody" class="divide-y divide-slate-100">
-          <tr>
-            <td colspan="9" class="p-8 text-center text-slate-400">
-              상단의 <strong>시연용 샘플 불러오기</strong> 또는 <strong>CSV 업로드</strong> 후 <strong>대상 선별 및 초안 생성</strong>을 눌러주세요.
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <p class="text-[11px] text-center text-slate-400">
+          입장 즉시 12명의 샘플 학적 데이터와 4대 AI 학사 회복 모듈이 활성화됩니다.
+        </p>
+      </div>
     </div>
   </div>
 
+  <!-- =========================================================================
+       2. SIDEBAR NAVIGATION (Deep Midnight Slate #0F172A)
+  ========================================================================== -->
+  <aside id="sidebar" class="w-full lg:w-72 bg-midnight text-white flex-shrink-0 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800 z-30">
+    <div>
+      <!-- Brand Header -->
+      <div class="px-6 h-16 flex items-center justify-between border-b border-slate-800/90">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-md shadow-indigo-500/20">
+            <i data-lucide="graduation-cap" class="w-5 h-5 text-white"></i>
+          </div>
+          <div>
+            <div class="font-bold text-base tracking-tight leading-none">ReCampus AI</div>
+            <div class="text-[11px] text-slate-400 mt-1 font-medium">학사·등록금 회복 인텔리전스</div>
+          </div>
+        </div>
+        <button id="mobileMenuToggle" type="button" class="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav id="sidebarNav" class="hidden lg:block p-4 space-y-1.5">
+        <div class="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Core Intelligence Modules</div>
+
+        <button type="button" data-tab="reenroll" class="nav-tab-btn w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-left text-sm font-semibold transition bg-indigo-600 text-white shadow-md shadow-indigo-950/50">
+          <span class="flex items-center gap-3">
+            <i data-lucide="user-check" class="w-4 h-4 flex-shrink-0"></i>
+            <span>복학·수료생 발굴</span>
+          </span>
+          <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/20 text-white">AI</span>
+        </button>
+
+        <button type="button" data-tab="credit" class="nav-tab-btn w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-left text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+          <span class="flex items-center gap-3">
+            <i data-lucide="git-compare" class="w-4 h-4 flex-shrink-0"></i>
+            <span>강의계획서 학점 매칭</span>
+          </span>
+          <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">편입·재입학</span>
+        </button>
+
+        <button type="button" data-tab="rpl" class="nav-tab-btn w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-left text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+          <span class="flex items-center gap-3">
+            <i data-lucide="award" class="w-4 h-4 flex-shrink-0"></i>
+            <span>경력·자격 학점 전환</span>
+          </span>
+          <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">RPL</span>
+        </button>
+
+        <button type="button" data-tab="roi" class="nav-tab-btn w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-left text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+          <span class="flex items-center gap-3">
+            <i data-lucide="calculator" class="w-4 h-4 flex-shrink-0"></i>
+            <span>대학 재정·수익 시뮬레이터</span>
+          </span>
+          <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">ROI</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Bottom Security Architecture Card -->
+    <div class="hidden lg:block p-4 border-t border-slate-800/90 space-y-3">
+      <div class="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/70">
+        <div class="flex items-center gap-2 text-xs font-bold text-emerald-400">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <span>개인정보 분리 아키텍처 가동중</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+          성명·연락처·원본학번은 브라우저 로컬 메모리(Vault)에만 격리되며, AI 분석에는 비식별 학사 지표만 사용됩니다.
+        </p>
+      </div>
+
+      <button id="btnReopenGate" type="button" class="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 transition flex items-center justify-center gap-1.5 cursor-pointer">
+        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+        <span>대학명 · 초기 설정 변경</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       3. MAIN WORKSPACE AREA (#F8FAFC)
+  ========================================================================== -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Top Executive Header -->
+    <header class="bg-white/95 backdrop-blur-sm border-b border-slate-200/90 sticky top-0 z-20">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+        <!-- Left: University Identity & Breadcrumb -->
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200/80">
+            <i data-lucide="landmark" class="w-4 h-4 text-indigo-600 flex-shrink-0"></i>
+            <span id="headerUnivTitle" class="text-xs sm:text-sm font-bold text-slate-900 truncate">충청미래대학교</span>
+          </div>
+          <span class="hidden md:inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+            <span>2027학년도 1학기 학사 회복 프로세스</span>
+          </span>
+        </div>
+
+        <!-- Right: Privacy Split Toggle & Status Badge -->
+        <div class="flex items-center gap-2.5 flex-shrink-0">
+          <span class="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            PII 로컬 격리 · 서버 미전송
+          </span>
+
+          <button id="btnTogglePiiMask" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition cursor-pointer">
+            <i id="piiLockIcon" data-lucide="lock" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span id="piiToggleLabel">로컬 실명 마스킹 해제</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dynamic Content Container -->
+    <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+      <!-- =====================================================================
+           TAB 1: 복학·수료생 발굴 (Re-Enrollment AI)
+      ====================================================================== -->
+      <section id="tab-reenroll" class="tab-panel space-y-6">
+        <!-- Top KPI Strip (4 Cards) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:border-slate-300 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">분석 대상 인원</span>
+              <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                <i data-lucide="users" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span id="kpiTotalCount" class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">12명</span>
+              <span id="kpiDatasetSource" class="text-xs font-medium text-slate-400">표준 샘플 DB</span>
+            </div>
+            <div id="kpiApprovalProgress" class="mt-2 text-xs font-medium text-slate-500">
+              실무 검토 2건 · 처장 결재 승인 2건
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:border-indigo-200 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">최우선(S) · 유망(A) 타겟</span>
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span id="kpiSaTargetCount" class="text-2xl sm:text-3xl font-bold text-indigo-600 tabular-nums">9명</span>
+              <span id="kpiSaBreakdown" class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">S 5 · A 4</span>
+            </div>
+            <div class="mt-2 text-xs font-medium text-slate-500">
+              잔여학점 소량 및 최근 2년 이내 이탈군
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:border-emerald-200 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">예상 복학·재입학 인원</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span id="kpiExpectedEnroll" class="text-2xl sm:text-3xl font-bold text-emerald-600 tabular-nums">2명</span>
+              <span class="text-xs font-medium text-slate-400">보수적 가중 전환</span>
+            </div>
+            <div class="mt-2 text-xs font-medium text-slate-500">
+              S등급 15% · A등급 7% · B등급 2% 기준
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:border-indigo-200 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">대학 예상 순증 등록금</span>
+              <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                <i data-lucide="wallet" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span id="kpiGrossTuition" class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">1,360만 원</span>
+            </div>
+            <div id="kpiSuccessFeeText" class="mt-2 text-xs font-semibold text-indigo-600 tabular-nums">
+              성과보수(20%): 272만 원
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs space-y-4">
+          <!-- Row 1: Search, Completion Slider, Upload & Sample CSV -->
+          <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+              <!-- Search -->
+              <div class="relative flex-1 max-w-sm">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input id="searchInput" type="text" placeholder="학과명, 비식별키, 로컬 성명 검색..." class="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+              </div>
+
+              <!-- Min Credit Completion Slider -->
+              <div class="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/80">
+                <span class="text-xs font-semibold text-slate-600 whitespace-nowrap">최소 이수율</span>
+                <input id="minCompletionSlider" type="range" min="0" max="100" step="5" value="0" class="w-24 sm:w-28" />
+                <span id="minCompletionLabel" class="text-xs font-bold text-indigo-600 tabular-nums w-10 text-right">0%</span>
+              </div>
+            </div>
+
+            <!-- File Upload & Sample CSV -->
+            <div class="flex flex-wrap items-center gap-2">
+              <label for="excelCsvUpload" class="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 transition">
+                <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                <span>엑셀/CSV 업로드</span>
+              </label>
+              <input id="excelCsvUpload" type="file" accept=".xlsx,.xls,.csv" class="hidden" />
+
+              <button id="btnDownloadSampleCsv" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition cursor-pointer">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-slate-500"></i>
+                <span>샘플 CSV 받기</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Row 2: Status Filter Pills + Batch Approval & Export -->
+          <div class="pt-3 border-t border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <!-- Status Filter Pills -->
+            <div id="statusFilterGroup" class="flex flex-wrap items-center gap-1.5">
+              <button type="button" data-status="ALL" class="status-pill-btn px-3 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-white transition cursor-pointer">전체</button>
+              <button type="button" data-status="수료" class="status-pill-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer">수료</button>
+              <button type="button" data-status="일반휴학" class="status-pill-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer">일반휴학</button>
+              <button type="button" data-status="미등록제적" class="status-pill-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer">미등록제적</button>
+              <button type="button" data-status="자퇴" class="status-pill-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer">자퇴</button>
+            </div>
+
+            <!-- Batch Actions -->
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="btnBatchApprove" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition cursor-pointer">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                <span>선택 일괄 결재승인</span>
+              </button>
+              <button id="btnExportApprovedCsv" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-2xs transition cursor-pointer">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>승인 명단 내보내기(CSV)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rich Student Table -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div class="px-5 py-3.5 bg-slate-50/70 border-b border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
+            <span>학생 행을 클릭하면 <strong>AI 회복 스코어 상세 분석 및 개인화 알림톡 편집 드로어</strong>가 열립니다.</span>
+            <span id="visibleRowCounter" class="font-semibold text-slate-700 tabular-nums">표시 12명</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50/40">
+                  <th class="py-3.5 pl-5 pr-2 w-10">
+                    <input id="selectAllCheckbox" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                  </th>
+                  <th class="py-3.5 px-3">비식별 ID · 로컬 학생정보</th>
+                  <th class="py-3.5 px-3">소속 학과</th>
+                  <th class="py-3.5 px-3">학적상태</th>
+                  <th class="py-3.5 px-3">이수율 · 잔여학점</th>
+                  <th class="py-3.5 px-3">AI 회복 등급</th>
+                  <th class="py-3.5 px-3">교내 결재 상태</th>
+                  <th class="py-3.5 pl-3 pr-5 text-right">상세</th>
+                </tr>
+              </thead>
+              <tbody id="studentTableBody" class="divide-y divide-slate-100 text-sm">
+                <!-- Populated dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="emptyFilterState" class="hidden py-16 px-4 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+              <i data-lucide="search-x" class="w-6 h-6"></i>
+            </div>
+            <p class="text-sm font-bold text-slate-800">조건에 일치하는 대상자가 없습니다</p>
+            <p class="text-xs text-slate-500 mt-1">검색어를 지우거나 학적상태 필터를 '전체'로 선택해 주세요.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           TAB 2: 강의계획서 학점 매칭 (Credit Transfer AI)
+      ====================================================================== -->
+      <section id="tab-credit" class="tab-panel hidden space-y-6">
+        <!-- Module Header Card -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full mb-2">
+              <i data-lucide="git-compare" class="w-3.5 h-3.5"></i>
+              <span>Syllabus Semantic Matching Engine</span>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900">강의계획서 기반 학점 인정 자동 매칭</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+              편입학·재입학·시간제등록 희망자의 전적대학 이수과목과 우리 대학 전공 교육과정의 학습목표·주차별 강의계획서를 비교해 인정학점을 산출합니다.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+            <div>
+              <div class="text-[11px] font-semibold text-slate-500">졸업 기준 학점</div>
+              <div class="text-lg font-bold text-slate-900 tabular-nums">130학점</div>
+            </div>
+            <div class="h-8 w-px bg-slate-200"></div>
+            <div>
+              <div class="text-[11px] font-semibold text-slate-500">승인 인정 학점</div>
+              <div id="creditApprovedTotal" class="text-lg font-bold text-emerald-600 tabular-nums">0학점</div>
+            </div>
+            <div class="h-8 w-px bg-slate-200"></div>
+            <div>
+              <div class="text-[11px] font-semibold text-slate-500">잔여 졸업 필요</div>
+              <div id="creditRemainingTotal" class="text-lg font-bold text-indigo-600 tabular-nums">130학점</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Custom Course Matcher Form -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">신규 전적대학 과목 매칭 시뮬레이션 추가</h3>
+          <form id="addCourseMatchForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <input id="prevCourseInput" type="text" required placeholder="전적대학 이수과목 (예: 데이터구조론)" class="px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input id="targetCourseInput" type="text" required placeholder="본교 매칭 전공과목 (예: 자료구조와알고리즘)" class="px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <select id="matchCategorySelect" class="px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="전공필수">전공필수 인정</option>
+              <option value="전공선택">전공선택 인정</option>
+              <option value="교양필수">교양필수 인정</option>
+            </select>
+            <input id="matchCreditsInput" type="number" min="1" max="6" value="3" required class="px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl tabular-nums focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <button type="submit" class="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>AI 매칭 분석 추가</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Course Matching Table -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50/50">
+                  <th class="py-3.5 px-5">전적대학 이수과목</th>
+                  <th class="py-3.5 px-4">본교 매칭 교육과정</th>
+                  <th class="py-3.5 px-4">이수구분</th>
+                  <th class="py-3.5 px-4">강의계획서 유사도</th>
+                  <th class="py-3.5 px-4">인정학점</th>
+                  <th class="py-3.5 px-4">심사상태</th>
+                  <th class="py-3.5 px-5 text-right">학점 인정 처리</th>
+                </tr>
+              </thead>
+              <tbody id="creditMatchBody" class="divide-y divide-slate-100 text-sm">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           TAB 3: 경력·자격 학점 전환 (RPL 심사)
+      ====================================================================== -->
+      <section id="tab-rpl" class="tab-panel hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Left: Interactive RPL Calculator -->
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs space-y-5">
+            <div>
+              <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full mb-2">
+                <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                <span>Recognition of Prior Learning (RPL)</span>
+              </span>
+              <h2 class="text-lg font-bold text-slate-900">성인학습자 경력·자격 학점 전환 심사기</h2>
+              <p class="text-xs text-slate-500 mt-1">
+                직장 경력 연수와 국가기술자격 등급을 입력하면 고등교육법 및 학칙 기준에 따른 인정 가능 학점을 즉시 산출합니다.
+              </p>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label for="rplApplicantName" class="block text-xs font-semibold text-slate-700 mb-1.5">신청자 식별명 (로컬 전용)</label>
+                <input id="rplApplicantName" type="text" value="성인학습자_2027_09 (물류현장 팀장)" class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+
+              <div>
+                <label for="rplTargetDept" class="block text-xs font-semibold text-slate-700 mb-1.5">지원 학과</label>
+                <select id="rplTargetDept" class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="스마트물류과">스마트물류과 (성인학습자 전담)</option>
+                  <option value="사회복지상담과">사회복지상담과</option>
+                  <option value="자동차기계과">자동차기계과</option>
+                  <option value="AI소프트웨어과">AI소프트웨어과</option>
+                  <option value="호텔관광경영과">호텔관광경영과</option>
+                </select>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1.5">
+                  <span class="text-slate-700">관련 산업체 재직 경력</span>
+                  <span id="rplYearsLabel" class="text-indigo-600 font-bold tabular-nums">5년 (10학점)</span>
+                </div>
+                <input id="rplYearsSlider" type="range" min="0" max="15" step="1" value="5" class="w-full" />
+                <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                  <span>0년</span>
+                  <span>5년</span>
+                  <span>10년</span>
+                  <span>15년+</span>
+                </div>
+              </div>
+
+              <div>
+                <label for="rplCertSelect" class="block text-xs font-semibold text-slate-700 mb-1.5">보유 국가기술자격 · 면허</label>
+                <select id="rplCertSelect" class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="0">해당 없음 (0학점)</option>
+                  <option value="3">기능사 / 국가공인 민간자격 (3학점)</option>
+                  <option value="6" selected>산업기사 / 사회복지사 2급 (6학점)</option>
+                  <option value="9">기사 / 물류관리사 / 간호조무사+경력 (9학점)</option>
+                  <option value="12">기능장 / 기술사 (12학점)</option>
+                </select>
+              </div>
+
+              <!-- Calculated Result Box -->
+              <div class="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200/80 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-indigo-900">총 전환 인정 가능 학점</div>
+                  <div class="text-[11px] text-indigo-700/80 mt-0.5">학칙 상한(최대 30학점) 이내 자동 산정</div>
+                </div>
+                <div id="rplTotalCreditsPreview" class="text-2xl font-extrabold text-indigo-600 tabular-nums">16학점</div>
+              </div>
+
+              <button id="btnAddRplRecord" type="button" class="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-2">
+                <i data-lucide="file-plus-2" class="w-4 h-4"></i>
+                <span>RPL 학점 전환 심사 안건 등록</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: RPL Review Queue List -->
+          <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-200/80 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">학점인정심의위원회 상정 대기 목록</h3>
+                <p class="text-xs text-slate-500 mt-0.5">4대보험 가입증명 및 자격증 진위확인 후 학점을 확정합니다.</p>
+              </div>
+              <span id="rplCountBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 tabular-nums">4건</span>
+            </div>
+
+            <div id="rplQueueList" class="divide-y divide-slate-100 flex-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           TAB 4: 대학 재정·수익 시뮬레이터 (ROI)
+      ====================================================================== -->
+      <section id="tab-roi" class="tab-panel hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Left Controls (5 Cols) -->
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs space-y-6">
+            <div>
+              <span class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full mb-2">
+                <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+                <span>Executive Financial Simulation</span>
+              </span>
+              <h2 class="text-lg font-bold text-slate-900">대학 재정 순증 및 ROI 시뮬레이터</h2>
+              <p class="text-xs text-slate-500 mt-1">
+                대학의 누적 학적 이탈 풀과 평균 등록금을 기준으로 도입 비용 대비 순수익을 실시간 시뮬레이션합니다.
+              </p>
+            </div>
+
+            <div class="space-y-5">
+              <!-- Slider 1: Cumulative DB Pool -->
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1.5">
+                  <span class="text-slate-700">휴학·제적·수료 누적 DB 규모</span>
+                  <span id="roiPoolLabel" class="text-indigo-600 font-bold tabular-nums">1,200명</span>
+                </div>
+                <input id="roiPoolSlider" type="range" min="200" max="5000" step="100" value="1200" class="w-full" />
+              </div>
+
+              <!-- Slider 2: Annual Tuition -->
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1.5">
+                  <span class="text-slate-700">연간 평균 등록금 (1인 기준)</span>
+                  <span id="roiTuitionLabel" class="text-indigo-600 font-bold tabular-nums">6,800,000원</span>
+                </div>
+                <input id="roiTuitionSlider" type="range" min="3500000" max="10000000" step="100000" value="6800000" class="w-full" />
+              </div>
+
+              <!-- Slider 3: S-Tier Conversion Rate -->
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1.5">
+                  <span class="text-slate-700">최우선(S등급) 복학 전환율</span>
+                  <span id="roiSRateLabel" class="text-emerald-600 font-bold tabular-nums">15%</span>
+                </div>
+                <input id="roiSRateSlider" type="range" min="5" max="35" step="1" value="15" class="w-full" />
+              </div>
+
+              <!-- Slider 4: A-Tier Conversion Rate -->
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1.5">
+                  <span class="text-slate-700">유망(A등급) 복학 전환율</span>
+                  <span id="roiARateLabel" class="text-indigo-600 font-bold tabular-nums">7%</span>
+                </div>
+                <input id="roiARateSlider" type="range" min="2" max="20" step="1" value="7" class="w-full" />
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 space-y-1">
+              <div class="font-bold text-slate-800">적용 계약 기준 안내</div>
+              <div>• 초기 시스템 구축·연계 세팅비: <strong class="text-slate-900">1,500만 원</strong> (VAT 별도)</div>
+              <div>• 성과보수: 실제 복학·재입학 등록 완료 학생의 <strong class="text-indigo-700">연간 등록금 20%</strong></div>
+            </div>
+          </div>
+
+          <!-- Right Results & Visual Breakdown (7 Cols) -->
+          <div class="lg:col-span-7 space-y-5">
+            <!-- Top 3 Financial Comparison Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs">
+                <div class="text-xs font-semibold text-slate-500">대학 예상 등록금 순증액</div>
+                <div id="roiGrossRevenue" class="text-2xl font-extrabold text-slate-900 tabular-nums mt-2">3억 1,280만 원</div>
+                <div id="roiRecoveredStudents" class="text-xs font-semibold text-emerald-600 mt-1.5 tabular-nums">총 46명 복학·학위취득</div>
+              </div>
+
+              <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs">
+                <div class="text-xs font-semibold text-slate-500">총 도입 비용 (구축+성과)</div>
+                <div id="roiTotalCost" class="text-2xl font-extrabold text-indigo-600 tabular-nums mt-2">7,756만 원</div>
+                <div id="roiCostSplit" class="text-xs font-medium text-slate-500 mt-1.5 tabular-nums">구축 1,500만 + 성과 6,256만</div>
+              </div>
+
+              <div class="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-2xl border border-slate-800 p-5 shadow-md text-white">
+                <div class="text-xs font-semibold text-indigo-200">대학 실질 순수익 (ROI)</div>
+                <div id="roiNetProfit" class="text-2xl font-extrabold text-white tabular-nums mt-2">2억 3,524만 원</div>
+                <div id="roiMultipleBadge" class="inline-block text-xs font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full mt-1.5 tabular-nums">투자 대비 4.0배 회수</div>
+              </div>
+            </div>
+
+            <!-- Visual Horizontal Breakdown Card -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs space-y-5">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">등록금 회수 배분 및 등급별 기여도 분석</h3>
+                  <p class="text-xs text-slate-500 mt-0.5">전체 DB 중 S등급(약 30%), A등급(약 45%), B등급(약 25%) 분포 기준</p>
+                </div>
+                <span class="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full tabular-nums">100% 총 등록금 수입 기준</span>
+              </div>
+
+              <!-- Stacked Horizontal Bar -->
+              <div class="space-y-2">
+                <div class="w-full h-7 rounded-xl overflow-hidden flex bg-slate-100 p-0.5 border border-slate-200/80">
+                  <div id="barNetUniv" style="width: 75%" class="h-full bg-emerald-500 rounded-l-lg transition-all duration-300 flex items-center justify-center text-[11px] font-bold text-white">대학 순수익</div>
+                  <div id="barPerfFee" style="width: 20%" class="h-full bg-indigo-500 transition-all duration-300 flex items-center justify-center text-[11px] font-bold text-white">성과보수</div>
+                  <div id="barSetupFee" style="width: 5%" class="h-full bg-amber-500 rounded-r-lg transition-all duration-300"></div>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs pt-1">
+                  <span class="flex items-center gap-1.5 font-medium text-slate-700"><span class="w-2.5 h-2.5 rounded-xs bg-emerald-500"></span>대학 실질 순수익 (<span id="pctNetUniv" class="tabular-nums font-bold">75.2%</span>)</span>
+                  <span class="flex items-center gap-1.5 font-medium text-slate-700"><span class="w-2.5 h-2.5 rounded-xs bg-indigo-500"></span>성과보수 20% (<span id="pctPerfFee" class="tabular-nums font-bold">20.0%</span>)</span>
+                  <span class="flex items-center gap-1.5 font-medium text-slate-700"><span class="w-2.5 h-2.5 rounded-xs bg-amber-500"></span>초기 구축비 1,500만 (<span id="pctSetupFee" class="tabular-nums font-bold">4.8%</span>)</span>
+                </div>
+              </div>
+
+              <!-- Tier Breakdown Table -->
+              <div class="border border-slate-200/80 rounded-xl overflow-hidden">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
+                    <tr>
+                      <th class="py-2.5 px-4">AI 타겟 등급</th>
+                      <th class="py-2.5 px-4">추정 모수</th>
+                      <th class="py-2.5 px-4">적용 전환율</th>
+                      <th class="py-2.5 px-4">예상 복학 인원</th>
+                      <th class="py-2.5 px-4 text-right">예상 등록금 기여</th>
+                    </tr>
+                  </thead>
+                  <tbody id="roiTierTableBody" class="divide-y divide-slate-100 tabular-nums">
+                    <!-- Populated by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- =========================================================================
+       4. SLIDE-OVER STUDENT DETAIL DRAWER
+  ========================================================================== -->
+  <div id="drawerBackdrop" class="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-xs hidden transition-opacity"></div>
+  <aside id="studentDetailDrawer" class="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-white shadow-2xl border-l border-slate-200 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- Drawer Header -->
+    <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+      <div>
+        <div class="flex items-center gap-2">
+          <span id="drawerAnonId" class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800">RC-2027-01</span>
+          <span id="drawerGradePill" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">최우선(S)</span>
+        </div>
+        <h3 id="drawerStudentTitle" class="text-base font-bold text-slate-900 mt-1.5">간호학과 · 김*진 (010-****-4102)</h3>
+      </div>
+      <button id="btnCloseDrawer" type="button" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 transition cursor-pointer">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Drawer Scrollable Body -->
+    <div class="p-6 overflow-y-auto flex-1 space-y-6">
+      <!-- Privacy Notice Strip -->
+      <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 flex items-start gap-2.5 text-xs text-emerald-900">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div>
+          <strong>로컬 메모리 결합 표시 중:</strong> 성명과 연락처는 귀교 PC 브라우저 메모리에서만 결합되며, AI 스코어링 엔진은 비식별 학점·이탈 데이터만 참조합니다.
+        </div>
+      </div>
+
+      <!-- Academic Snapshot -->
+      <div class="grid grid-cols-3 gap-3 text-center">
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+          <div class="text-[11px] font-semibold text-slate-500">이수 / 졸업기준</div>
+          <div id="drawerCreditsText" class="text-sm font-bold text-slate-900 tabular-nums mt-1">130 / 130학점</div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+          <div class="text-[11px] font-semibold text-slate-500">잔여 학점</div>
+          <div id="drawerRemainText" class="text-sm font-bold text-indigo-600 tabular-nums mt-1">0학점</div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+          <div class="text-[11px] font-semibold text-slate-500">이탈 경과 / 평점</div>
+          <div id="drawerElapsedGpaText" class="text-sm font-bold text-slate-900 tabular-nums mt-1">1년 / 3.74</div>
+        </div>
+      </div>
+
+      <!-- AI Recovery Score Breakdown Bar -->
+      <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-800">AI 회복 가능성 스코어 분해</span>
+          <span id="drawerTotalScore" class="text-lg font-extrabold text-indigo-600 tabular-nums">100점 / 100점</span>
+        </div>
+
+        <!-- Stacked Score Bar -->
+        <div class="w-full h-3 rounded-full bg-slate-100 overflow-hidden flex">
+          <div id="scoreBarRate" style="width: 50%" class="bg-emerald-500 h-full" title="이수율 점수"></div>
+          <div id="scoreBarElapsed" style="width: 30%" class="bg-indigo-500 h-full" title="이탈경과 점수"></div>
+          <div id="scoreBarGpa" style="width: 10%" class="bg-blue-500 h-full" title="평점 점수"></div>
+          <div id="scoreBarStatus" style="width: 10%" class="bg-amber-500 h-full" title="학적가산점"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+            <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>이수율 점수 (최대 50)</span>
+            <span id="scoreValRate" class="font-bold text-slate-900 tabular-nums">+50점</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+            <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2 h-2 rounded-full bg-indigo-500"></span>이탈경과 점수 (최대 30)</span>
+            <span id="scoreValElapsed" class="font-bold text-slate-900 tabular-nums">+30점</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+            <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2 h-2 rounded-full bg-blue-500"></span>평점 점수 (최대 10)</span>
+            <span id="scoreValGpa" class="font-bold text-slate-900 tabular-nums">+10점</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+            <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2 h-2 rounded-full bg-amber-500"></span>학적가산점 (최대 10)</span>
+            <span id="scoreValStatus" class="font-bold text-slate-900 tabular-nums">+10점</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editable SMS / AlimTalk Template -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label for="drawerMessageTextarea" class="text-xs font-bold text-slate-800">개인화 알림톡 · SMS 발송 초안 (직접 편집 가능)</label>
+          <button id="btnCopyDrawerMsg" type="button" class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>문구 복사</span>
+          </button>
+        </div>
+        <textarea id="drawerMessageTextarea" rows="5" class="w-full p-3.5 text-xs sm:text-sm text-slate-800 bg-slate-50 border border-slate-200 rounded-xl leading-relaxed focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"></textarea>
+        <div class="flex justify-between text-[11px] text-slate-400">
+          <span>교내 공식 발송망(알림톡/SMS) 연동용 표준 포맷</span>
+          <span id="drawerCharCount" class="tabular-nums">0자</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drawer Footer Approval Actions -->
+    <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+      <button id="btnDrawerMarkReview" type="button" class="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition cursor-pointer flex items-center justify-center gap-1.5">
+        <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+        <span>실무자 검토 완료</span>
+      </button>
+      <button id="btnDrawerApproveFinal" type="button" class="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5">
+        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+        <span>처장 결재 승인</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       5. JAVASCRIPT APPLICATION LOGIC (100% Browser-Side Execution)
+  ========================================================================== -->
   <script>
-    const SAMPLE_DATA = [
-      { record_key: "K-101", dept_name: "스마트물류과", status_code: "수료", earned_credits: 126, req_credits: 130, elapsed_years: 1, gpa: 3.4 },
-      { record_key: "K-102", dept_name: "호텔관광경영과", status_code: "일반휴학", earned_credits: 102, req_credits: 130, elapsed_years: 1, gpa: 3.2 },
-      { record_key: "K-103", dept_name: "AI소프트웨어과", status_code: "미등록제적", earned_credits: 98, req_credits: 130, elapsed_years: 2, gpa: 3.1 },
-      { record_key: "K-104", dept_name: "간호학과", status_code: "수료", earned_credits: 138, req_credits: 140, elapsed_years: 1, gpa: 3.6 },
-      { record_key: "K-105", dept_name: "사회복지상담과", status_code: "자퇴", earned_credits: 72, req_credits: 130, elapsed_years: 3, gpa: 2.8 },
-      { record_key: "K-106", dept_name: "자동차기계과", status_code: "일반휴학", earned_credits: 80, req_credits: 120, elapsed_years: 2, gpa: 2.9 }
+    // -------------------------------------------------------------------------
+    // State & Privacy-First Local Vault
+    // -------------------------------------------------------------------------
+    const SETUP_FEE_KRW = 15000000;
+    const BASE_TUITION_KRW = 6800000;
+
+    // PII stays strictly in this local Map; never sent to external servers
+    const localPiiVault = new Map();
+
+    let state = {
+      univName: '충청미래대학교',
+      piiUnmasked: false,
+      activeTab: 'reenroll',
+      searchQuery: '',
+      statusFilter: 'ALL',
+      minCompletion: 0,
+      datasetSourceLabel: '표준 샘플 DB',
+      students: [],
+      activeDrawerId: null,
+      creditMatches: [
+        { id: 'CM-01', prevCourse: '기본간호학실습 I', targetCourse: '기본간호학 및 실습 I', category: '전공필수', similarity: 96, credits: 3, approved: true },
+        { id: 'CM-02', prevCourse: '물류관리개론', targetCourse: '스마트공급망관리(SCM)', category: '전공필수', similarity: 92, credits: 3, approved: true },
+        { id: 'CM-03', prevCourse: '파이썬프로그래밍기초', targetCourse: 'AI프로그래밍입문', category: '전공선택', similarity: 89, credits: 3, approved: true },
+        { id: 'CM-04', prevCourse: '반도체소자물리', targetCourse: '반도체공정및소자기초', category: '전공필수', similarity: 85, credits: 3, approved: false },
+        { id: 'CM-05', prevCourse: '호텔서비스실무', targetCourse: '환대산업서비스경영', category: '전공선택', similarity: 81, credits: 2, approved: false }
+      ],
+      rplQueue: [
+        { id: 'RPL-101', applicant: '성인학습자_2027_01 (물류센터 7년)', dept: '스마트물류과', years: 7, certName: '물류관리사 (국가전문)', credits: 21, status: '심의승인' },
+        { id: 'RPL-102', applicant: '성인학습자_2027_02 (자동차부품 5년)', dept: '자동차기계과', years: 5, certName: '자동차정비산업기사', credits: 16, status: '증빙검토중' },
+        { id: 'RPL-103', applicant: '성인학습자_2027_03 (요양시설 4년)', dept: '사회복지상담과', years: 4, certName: '사회복지사 2급', credits: 14, status: '심의승인' },
+        { id: 'RPL-104', applicant: '성인학습자_2027_04 (IT개발 6년)', dept: 'AI소프트웨어과', years: 6, certName: '정보처리기사', credits: 21, status: '증빙검토중' }
+      ]
+    };
+
+    // -------------------------------------------------------------------------
+    // Preloaded Realistic 12-Student Dataset
+    // -------------------------------------------------------------------------
+    const INITIAL_SAMPLE_DATA = [
+      { anonId: 'RC-2027-01', fullName: '김서진', maskedName: '김*진', fullPhone: '010-4821-4102', maskedPhone: '010-****-4102', dept: '간호학과', status: '수료', earned: 130, req: 130, elapsedYears: 1, gpa: 3.74, approval: '결재승인' },
+      { anonId: 'RC-2027-02', fullName: '이현준', maskedName: '이*준', fullPhone: '010-9104-8821', maskedPhone: '010-****-8821', dept: 'AI소프트웨어과', status: '일반휴학', earned: 122, req: 130, elapsedYears: 1, gpa: 3.58, approval: '결재승인' },
+      { anonId: 'RC-2027-03', fullName: '박지훈', maskedName: '박*훈', fullPhone: '010-3329-1934', maskedPhone: '010-****-1934', dept: '반도체공학과', status: '수료', earned: 128, req: 130, elapsedYears: 1, gpa: 3.42, approval: '실무검토' },
+      { anonId: 'RC-2027-04', fullName: '최유나', maskedName: '최*나', fullPhone: '010-7741-5520', maskedPhone: '010-****-5520', dept: '유아교육과', status: '일반휴학', earned: 118, req: 130, elapsedYears: 1, gpa: 3.85, approval: '실무검토' },
+      { anonId: 'RC-2027-05', fullName: '정민호', maskedName: '정*호', fullPhone: '010-6210-7319', maskedPhone: '010-****-7319', dept: '스마트물류과', status: '미등록제적', earned: 121, req: 130, elapsedYears: 2, gpa: 3.25, approval: '검토대기' },
+      { anonId: 'RC-2027-06', fullName: '한소민', maskedName: '한*민', fullPhone: '010-5192-6048', maskedPhone: '010-****-6048', dept: '호텔관광경영과', status: '일반휴학', earned: 108, req: 130, elapsedYears: 1, gpa: 3.35, approval: '검토대기' },
+      { anonId: 'RC-2027-07', fullName: '오세영', maskedName: '오*영', fullPhone: '010-8402-2910', maskedPhone: '010-****-2910', dept: '간호학과', status: '미등록제적', earned: 112, req: 130, elapsedYears: 2, gpa: 3.41, approval: '검토대기' },
+      { anonId: 'RC-2027-08', fullName: '윤태우', maskedName: '윤*우', fullPhone: '010-2958-9472', maskedPhone: '010-****-9472', dept: '자동차기계과', status: '일반휴학', earned: 102, req: 130, elapsedYears: 2, gpa: 3.12, approval: '검토대기' },
+      { anonId: 'RC-2027-09', fullName: '장하은', maskedName: '장*은', fullPhone: '010-4019-3817', maskedPhone: '010-****-3817', dept: '사회복지상담과', status: '자퇴', earned: 105, req: 130, elapsedYears: 2, gpa: 3.29, approval: '검토대기' },
+      { anonId: 'RC-2027-10', fullName: '임도현', maskedName: '임*현', fullPhone: '010-7391-6711', maskedPhone: '010-****-6711', dept: '반도체공학과', status: '미등록제적', earned: 92, req: 130, elapsedYears: 3, gpa: 2.88, approval: '검토대기' },
+      { anonId: 'RC-2027-11', fullName: '강지수', maskedName: '강*수', fullPhone: '010-9520-8190', maskedPhone: '010-****-8190', dept: '스마트물류과', status: '일반휴학', earned: 84, req: 130, elapsedYears: 2, gpa: 3.04, approval: '검토대기' },
+      { anonId: 'RC-2027-12', fullName: '조은지', maskedName: '조*지', fullPhone: '010-3847-4409', maskedPhone: '010-****-4409', dept: '호텔관광경영과', status: '자퇴', earned: 76, req: 130, elapsedYears: 4, gpa: 2.91, approval: '검토대기' }
     ];
 
-    let rawRecords = [...SAMPLE_DATA];
-    let analyzedItems = [];
+    // -------------------------------------------------------------------------
+    // AI Scoring & Personalized Message Engine (Pure Client-Side)
+    // -------------------------------------------------------------------------
+    function calculateAiScore(rec) {
+      const rate = rec.req > 0 ? Math.min(100, (rec.earned / rec.req) * 100) : 0;
+      const remain = Math.max(0, Number((rec.req - rec.earned).toFixed(1)));
 
-    function getFilteredRecords() {
-      const st = document.getElementById("filterStatus").value;
-      const minRate = Number(document.getElementById("minRate").value || 0);
-      return rawRecords.filter(r => {
-        const rate = r.req_credits > 0 ? (r.earned_credits / r.req_credits) * 100 : 0;
-        const okStatus = (st === "ALL") || (r.status_code === st);
-        const okRate = rate >= minRate;
-        return okStatus && okRate;
-      });
-    }
+      let rateScore = 0;
+      if (rate >= 90) rateScore = 50;
+      else if (rate >= 75) rateScore = 35;
+      else if (rate >= 50) rateScore = 20;
+      else rateScore = 10;
 
-    function renderGrid() {
-      const tbody = document.getElementById("gridBody");
-      if (!analyzedItems.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400">표시할 데이터가 없습니다.</td></tr>`;
-        return;
+      let elapsedScore = 0;
+      if (rec.elapsedYears <= 1) elapsedScore = 30;
+      else if (rec.elapsedYears <= 3) elapsedScore = 20;
+      else elapsedScore = 10;
+
+      const gpaScore = rec.gpa >= 3.0 ? 10 : 5;
+      const statusScore = (rec.status === '수료' || rec.status === '일반휴학') ? 10 : 4;
+
+      const totalScore = rateScore + elapsedScore + gpaScore + statusScore;
+
+      let tier = 'B';
+      let tierLabel = '중장기(B)';
+      if (totalScore >= 80) {
+        tier = 'S';
+        tierLabel = '최우선(S)';
+      } else if (totalScore >= 60) {
+        tier = 'A';
+        tierLabel = '유망(A)';
       }
-      tbody.innerHTML = analyzedItems.map((it, idx) => `
-        <tr class="hover:bg-slate-50 align-top">
-          <td class="p-3"><input type="checkbox" class="row-check" data-idx="${idx}" /></td>
-          <td class="p-3 font-mono text-xs text-slate-600">${it.record_key}</td>
-          <td class="p-3 font-medium">${it.dept_name}</td>
-          <td class="p-3">${it.status_code}</td>
-          <td class="p-3">${it.earned_credits}/${it.req_credits} <span class="text-xs text-slate-500">(잔여 ${it.remain_credits})</span></td>
-          <td class="p-3 text-xs">${it.elapsed_years}년 / 평점 ${it.gpa}</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700">${it.priority} (${it.score}점)</span></td>
-          <td class="p-3">
-            <span class="px-2 py-0.5 rounded text-xs font-semibold ${it.approval_status === '결재승인' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-              ${it.approval_status}
-            </span>
-          </td>
-          <td class="p-3 text-xs text-slate-700 leading-relaxed">${it.draft_message}</td>
-        </tr>
-      `).join("");
+
+      return {
+        completionRate: Number(rate.toFixed(1)),
+        remainCredits: remain,
+        rateScore,
+        elapsedScore,
+        gpaScore,
+        statusScore,
+        totalScore,
+        tier,
+        tierLabel
+      };
     }
 
-    document.getElementById("btnSample").addEventListener("click", () => {
-      rawRecords = [...SAMPLE_DATA];
-      alert("시연용 샘플 6건이 로드되었습니다. '대상 선별 및 초안 생성'을 눌러보세요.");
-    });
+    function generateAlimTalkTemplate(univName, rec, metrics) {
+      if (rec.status === '수료' || metrics.remainCredits === 0) {
+        return `[${univName} 학사지원처] ${rec.dept} 수료 대상자님, 졸업 기준 ${rec.req}학점을 모두 이수하셨습니다. 잔여 졸업요건(졸업인증·대체과목) 확인 시 2027학년도 1학기 즉시 학위 취득이 가능합니다. 학과 전담 상담 창구에서 간편 절차를 확인해 보세요.`;
+      }
+      if (metrics.remainCredits <= 12) {
+        return `[${univName} 학사지원처] ${rec.dept} ${rec.status} 대상자님, 현재 이수율 ${metrics.completionRate}%(잔여 ${metrics.remainCredits}학점)로 졸업이 목전입니다. 계절학기 및 유연학기제를 통한 단기 학위 취득 맞춤 안내를 확인해 보세요.`;
+      }
+      if (rec.status === '미등록제적' || rec.status === '자퇴') {
+        return `[${univName} 학사지원처] ${rec.dept} 대상자님, 기존 이수하신 ${rec.earned}학점 전액 인정 및 2027학년도 재입학·성인학습자 과정 연계 가능 여부를 안내드립니다. 잔여 ${metrics.remainCredits}학점 이수 로드맵을 상담받아 보세요.`;
+      }
+      return `[${univName} 학사지원처] ${rec.dept} 일반휴학 대상자님, 현재 이수율 ${metrics.completionRate}%(잔여 ${metrics.remainCredits}학점) 기준 2027학년도 1학기 복학 신청 및 등록금 분납·장학 혜택을 안내해 드립니다.`;
+    }
 
-    document.getElementById("csvFile").addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const text = await file.text();
-      const lines = text.trim().split(/\r?\n/);
-      if (lines.length < 2) return;
-      const headers = lines[0].split(",").map(h => h.trim());
-      rawRecords = lines.slice(1).map((line, i) => {
-        const cols = line.split(",").map(c => c.trim());
-        const obj = {};
-        headers.forEach((h, idx) => obj[h] = cols[idx]);
-        return {
-          record_key: obj.record_key || `ROW-${i + 1}`,
-          dept_name: obj.dept_name || "미지정학과",
-          status_code: obj.status_code || "일반휴학",
-          earned_credits: Number(obj.earned_credits || 0),
-          req_credits: Number(obj.req_credits || 130),
-          elapsed_years: Number(obj.elapsed_years || 1),
-          gpa: Number(obj.gpa || 3.0)
+    function hydrateStudentRecords(rawList, sourceLabel = '표준 샘플 DB') {
+      localPiiVault.clear();
+      state.datasetSourceLabel = sourceLabel;
+
+      state.students = rawList.map((item, idx) => {
+        const anonId = item.anonId || `RC-2027-${String(idx + 1).padStart(2, '0')}`;
+        // Store PII strictly in local vault
+        localPiiVault.set(anonId, {
+          fullName: item.fullName || `학생${idx + 1}`,
+          maskedName: item.maskedName || maskKoreanName(item.fullName || `학생${idx + 1}`),
+          fullPhone: item.fullPhone || '010-0000-0000',
+          maskedPhone: item.maskedPhone || maskPhoneNumber(item.fullPhone || '010-0000-0000')
+        });
+
+        const cleanRec = {
+          anonId,
+          dept: item.dept || '미지정학과',
+          status: item.status || '일반휴학',
+          earned: Number(item.earned) || 0,
+          req: Number(item.req) || 130,
+          elapsedYears: Number(item.elapsedYears) || 1,
+          gpa: Number(item.gpa) || 3.0,
+          approval: item.approval || '검토대기',
+          checked: false
         };
-      });
-      alert(`CSV ${rawRecords.length}건이 로드되었습니다.`);
-    });
 
-    document.getElementById("btnAnalyze").addEventListener("click", async () => {
-      const targets = getFilteredRecords();
-      if (!targets.length) {
-        alert("조회 조건에 맞는 대상이 없습니다.");
-        return;
+        const metrics = calculateAiScore(cleanRec);
+        return {
+          ...cleanRec,
+          ...metrics,
+          customMessage: item.customMessage || generateAlimTalkTemplate(state.univName, cleanRec, metrics)
+        };
+      }).sort((a, b) => b.totalScore - a.totalScore);
+
+      renderReenrollModule();
+    }
+
+    function maskKoreanName(name) {
+      const s = String(name || '').trim();
+      if (s.length <= 1) return s;
+      if (s.length === 2) return s[0] + '*';
+      return s[0] + '*'.repeat(s.length - 2) + s[s.length - 1];
+    }
+
+    function maskPhoneNumber(phone) {
+      const s = String(phone || '').trim();
+      const parts = s.split('-');
+      if (parts.length === 3) return `${parts[0]}-****-${parts[2]}`;
+      return '010-****-0000';
+    }
+
+    // -------------------------------------------------------------------------
+    // Toast Notification Helper
+    // -------------------------------------------------------------------------
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const styles = {
+        success: 'bg-slate-900 text-white border-emerald-500',
+        error: 'bg-rose-700 text-white border-rose-300',
+        info: 'bg-slate-900 text-white border-indigo-500'
+      };
+      toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-xl border-l-4 text-xs font-semibold transition-all duration-300 opacity-0 translate-y-2 ${styles[type] || styles.info}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => toast.classList.remove('opacity-0', 'translate-y-2'));
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    function copyTextSafe(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('알림톡 초안이 클립보드에 복사되었습니다.', 'success');
+      } catch (_) {
+        showToast('복사에 실패했습니다.', 'error');
       }
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          univ_name: document.getElementById("univName").value,
-          tuition_krw: Number(document.getElementById("tuitionKrw").value || 6800000),
-          records: targets
-        })
-      });
-      const data = await res.json();
-      analyzedItems = data.items;
+      document.body.removeChild(ta);
+    }
 
-      document.getElementById("mTotal").innerText = `${data.summary.total_count}명`;
-      document.getElementById("mSA").innerText = `${data.summary.s_count} / ${data.summary.a_count}명`;
-      document.getElementById("mEnroll").innerText = `${data.summary.est_enroll}명`;
-      document.getElementById("mFee").innerText = `${Math.round(data.summary.est_success_fee / 10000).toLocaleString()}만 원`;
-
-      renderGrid();
-    });
-
-    document.getElementById("checkAll").addEventListener("change", (e) => {
-      document.querySelectorAll(".row-check").forEach(cb => cb.checked = e.target.checked);
-    });
-
-    document.getElementById("btnApprove").addEventListener("click", () => {
-      let changed = 0;
-      document.querySelectorAll(".row-check:checked").forEach(cb => {
-        const idx = Number(cb.dataset.idx);
-        if (analyzedItems[idx]) {
-          analyzedItems[idx].approval_status = "결재승인";
-          changed++;
+    // -------------------------------------------------------------------------
+    // Tab 1 Rendering: Re-Enrollment AI
+    // -------------------------------------------------------------------------
+    function getFilteredStudents() {
+      const q = state.searchQuery.trim().toLowerCase();
+      return state.students.filter(st => {
+        const statusOk = state.statusFilter === 'ALL' || st.status === state.statusFilter;
+        const rateOk = st.completionRate >= state.minCompletion;
+        let queryOk = true;
+        if (q) {
+          const pii = localPiiVault.get(st.anonId) || {};
+          const hay = `${st.anonId} ${st.dept} ${st.status} ${pii.fullName || ''} ${pii.maskedName || ''}`.toLowerCase();
+          queryOk = hay.includes(q);
         }
+        return statusOk && rateOk && queryOk;
       });
-      if (!changed) {
-        alert("결재 승인할 행을 체크해 주세요.");
+    }
+
+    function renderReenrollModule() {
+      const filtered = getFilteredStudents();
+
+      // KPI Calculations
+      const totalCount = filtered.length;
+      const sCount = filtered.filter(s => s.tier === 'S').length;
+      const aCount = filtered.filter(s => s.tier === 'A').length;
+      const bCount = filtered.filter(s => s.tier === 'B').length;
+
+      const reviewCount = filtered.filter(s => s.approval === '실무검토').length;
+      const approvedCount = filtered.filter(s => s.approval === '결재승인').length;
+
+      const expectedEnroll = totalCount > 0 ? Math.max(1, Math.round(sCount * 0.15 + aCount * 0.07 + bCount * 0.02)) : 0;
+      const grossTuition = expectedEnroll * BASE_TUITION_KRW;
+      const successFee = Math.round(grossTuition * 0.20);
+
+      document.getElementById('kpiTotalCount').textContent = `${totalCount.toLocaleString()}명`;
+      document.getElementById('kpiDatasetSource').textContent = state.datasetSourceLabel;
+      document.getElementById('kpiApprovalProgress').textContent = `실무 검토 ${reviewCount}건 · 처장 결재 승인 ${approvedCount}건`;
+
+      document.getElementById('kpiSaTargetCount').textContent = `${(sCount + aCount).toLocaleString()}명`;
+      document.getElementById('kpiSaBreakdown').textContent = `S ${sCount} · A ${aCount}`;
+
+      document.getElementById('kpiExpectedEnroll').textContent = `${expectedEnroll.toLocaleString()}명`;
+      document.getElementById('kpiGrossTuition').textContent = `${Math.round(grossTuition / 10000).toLocaleString()}만 원`;
+      document.getElementById('kpiSuccessFeeText').textContent = `성과보수(20%): ${Math.round(successFee / 10000).toLocaleString()}만 원`;
+
+      document.getElementById('visibleRowCounter').textContent = `표시 ${totalCount}명`;
+
+      // Table Rendering
+      const tbody = document.getElementById('studentTableBody');
+      const emptyBox = document.getElementById('emptyFilterState');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyBox.classList.remove('hidden');
+        lucide.createIcons();
         return;
       }
-      renderGrid();
+
+      emptyBox.classList.add('hidden');
+
+      const tierBadge = (tier, label, score) => {
+        if (tier === 'S') {
+          return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 tabular-nums"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${label} · ${score}점</span>`;
+        }
+        if (tier === 'A') {
+          return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 tabular-nums"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>${label} · ${score}점</span>`;
+        }
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 tabular-nums">${label} · ${score}점</span>`;
+      };
+
+      const approvalBadge = (status) => {
+        if (status === '결재승인') {
+          return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>처장 결재승인</span>`;
+        }
+        if (status === '실무검토') {
+          return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>실무검토 완료</span>`;
+        }
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/80"><i data-lucide="clock" class="w-3.5 h-3.5"></i>검토대기</span>`;
+      };
+
+      tbody.innerHTML = filtered.map(st => {
+        const pii = localPiiVault.get(st.anonId) || {};
+        const dispName = state.piiUnmasked ? pii.fullName : pii.maskedName;
+        const dispPhone = state.piiUnmasked ? pii.fullPhone : pii.maskedPhone;
+
+        return `
+          <tr data-id="${st.anonId}" class="student-row group hover:bg-indigo-50/40 transition cursor-pointer">
+            <td class="py-3.5 pl-5 pr-2" onclick="event.stopPropagation()">
+              <input type="checkbox" data-id="${st.anonId}" ${st.checked ? 'checked' : ''} class="row-checkbox w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+            </td>
+            <td class="py-3.5 px-3">
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">${st.anonId}</span>
+                <span class="font-bold text-slate-900">${dispName}</span>
+              </div>
+              <div class="text-xs text-slate-400 tabular-nums mt-0.5">${dispPhone}</div>
+            </td>
+            <td class="py-3.5 px-3 font-semibold text-slate-800">${st.dept}</td>
+            <td class="py-3.5 px-3">
+              <div class="text-xs font-bold text-slate-700">${st.status}</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">이탈 ${st.elapsedYears}년 · 평점 ${st.gpa.toFixed(2)}</div>
+            </td>
+            <td class="py-3.5 px-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-900 tabular-nums">${st.completionRate}%</span>
+                <span class="text-xs font-semibold ${st.remainCredits <= 12 ? 'text-indigo-600' : 'text-slate-500'} tabular-nums">(잔여 ${st.remainCredits})</span>
+              </div>
+              <div class="w-28 h-1.5 rounded-full bg-slate-100 mt-1.5 overflow-hidden">
+                <div style="width: ${st.completionRate}%" class="h-full ${st.completionRate >= 90 ? 'bg-emerald-500' : 'bg-indigo-500'} rounded-full"></div>
+              </div>
+            </td>
+            <td class="py-3.5 px-3 whitespace-nowrap">${tierBadge(st.tier, st.tierLabel, st.totalScore)}</td>
+            <td class="py-3.5 px-3 whitespace-nowrap">${approvalBadge(st.approval)}</td>
+            <td class="py-3.5 pl-3 pr-5 text-right">
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Bind row click & checkbox events
+      document.querySelectorAll('.student-row').forEach(row => {
+        row.addEventListener('click', () => openStudentDrawer(row.dataset.id));
+      });
+
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const target = state.students.find(s => s.anonId === e.target.dataset.id);
+          if (target) target.checked = e.target.checked;
+        });
+      });
+
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------------------
+    // Slide-Over Detail Drawer Logic
+    // -------------------------------------------------------------------------
+    function openStudentDrawer(anonId) {
+      const st = state.students.find(s => s.anonId === anonId);
+      if (!st) return;
+
+      state.activeDrawerId = anonId;
+      const pii = localPiiVault.get(anonId) || {};
+      const dispName = state.piiUnmasked ? pii.fullName : pii.maskedName;
+      const dispPhone = state.piiUnmasked ? pii.fullPhone : pii.maskedPhone;
+
+      document.getElementById('drawerAnonId').textContent = st.anonId;
+      const pill = document.getElementById('drawerGradePill');
+      pill.textContent = `${st.tierLabel} · ${st.totalScore}점`;
+      pill.className = st.tier === 'S'
+        ? 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800'
+        : st.tier === 'A'
+          ? 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800'
+          : 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700';
+
+      document.getElementById('drawerStudentTitle').textContent = `${st.dept} · ${dispName} (${dispPhone})`;
+      document.getElementById('drawerCreditsText').textContent = `${st.earned} / ${st.req}학점`;
+      document.getElementById('drawerRemainText').textContent = `${st.remainCredits}학점`;
+      document.getElementById('drawerElapsedGpaText').textContent = `${st.elapsedYears}년 / ${st.gpa.toFixed(2)}`;
+
+      document.getElementById('drawerTotalScore').textContent = `${st.totalScore}점 / 100점`;
+      document.getElementById('scoreBarRate').style.width = `${st.rateScore}%`;
+      document.getElementById('scoreBarElapsed').style.width = `${st.elapsedScore}%`;
+      document.getElementById('scoreBarGpa').style.width = `${st.gpaScore}%`;
+      document.getElementById('scoreBarStatus').style.width = `${st.statusScore}%`;
+
+      document.getElementById('scoreValRate').textContent = `+${st.rateScore}점`;
+      document.getElementById('scoreValElapsed').textContent = `+${st.elapsedScore}점`;
+      document.getElementById('scoreValGpa').textContent = `+${st.gpaScore}점`;
+      document.getElementById('scoreValStatus').textContent = `+${st.statusScore}점`;
+
+      const textarea = document.getElementById('drawerMessageTextarea');
+      textarea.value = st.customMessage;
+      document.getElementById('drawerCharCount').textContent = `${st.customMessage.length}자`;
+
+      document.getElementById('drawerBackdrop').classList.remove('hidden');
+      document.getElementById('studentDetailDrawer').classList.remove('translate-x-full');
+      lucide.createIcons();
+    }
+
+    function closeStudentDrawer() {
+      state.activeDrawerId = null;
+      document.getElementById('drawerBackdrop').classList.add('hidden');
+      document.getElementById('studentDetailDrawer').classList.add('translate-x-full');
+    }
+
+    document.getElementById('btnCloseDrawer').addEventListener('click', closeStudentDrawer);
+    document.getElementById('drawerBackdrop').addEventListener('click', closeStudentDrawer);
+
+    document.getElementById('drawerMessageTextarea').addEventListener('input', (e) => {
+      const val = e.target.value;
+      document.getElementById('drawerCharCount').textContent = `${val.length}자`;
+      const st = state.students.find(s => s.anonId === state.activeDrawerId);
+      if (st) st.customMessage = val;
     });
 
-    document.getElementById("btnExport").addEventListener("click", () => {
-      const approved = analyzedItems.filter(i => i.approval_status === "결재승인");
-      if (!approved.length) {
-        alert("내보낼 '결재승인' 항목이 없습니다.");
+    document.getElementById('btnCopyDrawerMsg').addEventListener('click', () => {
+      copyTextSafe(document.getElementById('drawerMessageTextarea').value);
+    });
+
+    document.getElementById('btnDrawerMarkReview').addEventListener('click', () => {
+      const st = state.students.find(s => s.anonId === state.activeDrawerId);
+      if (!st) return;
+      st.approval = '실무검토';
+      renderReenrollModule();
+      showToast(`${st.anonId} 대상자가 '실무검토 완료' 처리되었습니다.`, 'info');
+      closeStudentDrawer();
+    });
+
+    document.getElementById('btnDrawerApproveFinal').addEventListener('click', () => {
+      const st = state.students.find(s => s.anonId === state.activeDrawerId);
+      if (!st) return;
+      st.approval = '결재승인';
+      renderReenrollModule();
+      showToast(`${st.anonId} 대상자가 '처장 결재승인' 완료되었습니다.`, 'success');
+      closeStudentDrawer();
+    });
+
+    // -------------------------------------------------------------------------
+    // Tab 2 Rendering: Credit Transfer AI
+    // -------------------------------------------------------------------------
+    function renderCreditTransferModule() {
+      const approvedCredits = state.creditMatches
+        .filter(m => m.approved)
+        .reduce((acc, cur) => acc + cur.credits, 0);
+
+      document.getElementById('creditApprovedTotal').textContent = `${approvedCredits}학점`;
+      document.getElementById('creditRemainingTotal').textContent = `${Math.max(0, 130 - approvedCredits)}학점`;
+
+      const tbody = document.getElementById('creditMatchBody');
+      tbody.innerHTML = state.creditMatches.map(m => `
+        <tr class="hover:bg-slate-50/80 transition">
+          <td class="py-3.5 px-5 font-semibold text-slate-800">${m.prevCourse}</td>
+          <td class="py-3.5 px-4 font-bold text-indigo-700">${m.targetCourse}</td>
+          <td class="py-3.5 px-4">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">${m.category}</span>
+          </td>
+          <td class="py-3.5 px-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold ${m.similarity >= 90 ? 'text-emerald-600' : 'text-indigo-600'} tabular-nums">${m.similarity}%</span>
+              <div class="w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div style="width: ${m.similarity}%" class="h-full ${m.similarity >= 90 ? 'bg-emerald-500' : 'bg-indigo-500'}"></div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3.5 px-4 font-bold text-slate-900 tabular-nums">${m.credits}학점</td>
+          <td class="py-3.5 px-4">
+            ${m.approved
+              ? '<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">학점 인정승인</span>'
+              : '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">학과장 심의대기</span>'}
+          </td>
+          <td class="py-3.5 px-5 text-right">
+            <button type="button" data-id="${m.id}" class="toggle-credit-btn px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${m.approved ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-emerald-600 text-white hover:bg-emerald-700'}">
+              ${m.approved ? '승인 취소' : '인정 승인'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('.toggle-credit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = state.creditMatches.find(x => x.id === btn.dataset.id);
+          if (item) {
+            item.approved = !item.approved;
+            renderCreditTransferModule();
+            showToast(`'${item.targetCourse}' 과목 상태가 변경되었습니다.`, 'info');
+          }
+        });
+      });
+
+      lucide.createIcons();
+    }
+
+    document.getElementById('addCourseMatchForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const prevCourse = document.getElementById('prevCourseInput').value.trim();
+      const targetCourse = document.getElementById('targetCourseInput').value.trim();
+      const category = document.getElementById('matchCategorySelect').value;
+      const credits = Math.max(1, Math.min(6, Number(document.getElementById('matchCreditsInput').value) || 3));
+      const similarity = Math.floor(82 + Math.random() * 16);
+
+      state.creditMatches.unshift({
+        id: `CM-${Date.now()}`,
+        prevCourse,
+        targetCourse,
+        category,
+        similarity,
+        credits,
+        approved: similarity >= 88
+      });
+
+      document.getElementById('prevCourseInput').value = '';
+      document.getElementById('targetCourseInput').value = '';
+      renderCreditTransferModule();
+      showToast(`강의계획서 유사도 ${similarity}% 분석이 완료되었습니다.`, 'success');
+    });
+
+    // -------------------------------------------------------------------------
+    // Tab 3 Rendering: RPL Prior Learning Converter
+    // -------------------------------------------------------------------------
+    function updateRplPreview() {
+      const years = Number(document.getElementById('rplYearsSlider').value) || 0;
+      const certCredits = Number(document.getElementById('rplCertSelect').value) || 0;
+      const expCredits = Math.min(18, years * 2);
+      const total = Math.min(30, expCredits + certCredits);
+
+      document.getElementById('rplYearsLabel').textContent = `${years}년 (${expCredits}학점)`;
+      document.getElementById('rplTotalCreditsPreview').textContent = `${total}학점`;
+      return { years, certCredits, total };
+    }
+
+    function renderRplModule() {
+      updateRplPreview();
+      document.getElementById('rplCountBadge').textContent = `${state.rplQueue.length}건`;
+
+      const listEl = document.getElementById('rplQueueList');
+      listEl.innerHTML = state.rplQueue.map(item => `
+        <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs font-bold text-slate-500">${item.id}</span>
+              <span class="font-bold text-sm text-slate-900">${item.applicant}</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${item.dept}</span>
+            </div>
+            <div class="text-xs text-slate-500 mt-1">
+              재직경력 ${item.years}년 · 보유자격: <strong class="text-slate-700">${item.certName}</strong>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 self-end sm:self-center">
+            <span class="text-sm font-extrabold text-indigo-600 tabular-nums">${item.credits}학점</span>
+            <button type="button" data-id="${item.id}" class="toggle-rpl-btn px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${item.status === '심의승인' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-emerald-600 hover:text-white'}">
+              ${item.status}
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.toggle-rpl-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = state.rplQueue.find(r => r.id === btn.dataset.id);
+          if (target) {
+            target.status = target.status === '심의승인' ? '증빙검토중' : '심의승인';
+            renderRplModule();
+            showToast(`${target.id} 심사 상태가 '${target.status}'으로 변경되었습니다.`, 'success');
+          }
+        });
+      });
+    }
+
+    document.getElementById('rplYearsSlider').addEventListener('input', updateRplPreview);
+    document.getElementById('rplCertSelect').addEventListener('change', updateRplPreview);
+
+    document.getElementById('btnAddRplRecord').addEventListener('click', () => {
+      const { years, total } = updateRplPreview();
+      const applicant = document.getElementById('rplApplicantName').value.trim() || '성인학습자 신규 신청';
+      const dept = document.getElementById('rplTargetDept').value;
+      const certSelect = document.getElementById('rplCertSelect');
+      const certName = certSelect.options[certSelect.selectedIndex].text.split('(')[0].trim();
+
+      state.rplQueue.unshift({
+        id: `RPL-${Math.floor(105 + Math.random() * 890)}`,
+        applicant,
+        dept,
+        years,
+        certName,
+        credits: total,
+        status: '증빙검토중'
+      });
+
+      renderRplModule();
+      showToast(`RPL 학점 전환 안건(${total}학점)이 등록되었습니다.`, 'success');
+    });
+
+    // -------------------------------------------------------------------------
+    // Tab 4 Rendering: Executive ROI Simulator
+    // -------------------------------------------------------------------------
+    function renderRoiSimulator() {
+      const pool = Number(document.getElementById('roiPoolSlider').value) || 1200;
+      const tuition = Number(document.getElementById('roiTuitionSlider').value) || 6800000;
+      const sRate = Number(document.getElementById('roiSRateSlider').value) || 15;
+      const aRate = Number(document.getElementById('roiARateSlider').value) || 7;
+      const bRate = 2;
+
+      document.getElementById('roiPoolLabel').textContent = `${pool.toLocaleString()}명`;
+      document.getElementById('roiTuitionLabel').textContent = `${tuition.toLocaleString()}원`;
+      document.getElementById('roiSRateLabel').textContent = `${sRate}%`;
+      document.getElementById('roiARateLabel').textContent = `${aRate}%`;
+
+      const sPool = Math.round(pool * 0.30);
+      const aPool = Math.round(pool * 0.45);
+      const bPool = Math.max(0, pool - sPool - aPool);
+
+      const sEnroll = Math.round(sPool * (sRate / 100));
+      const aEnroll = Math.round(aPool * (aRate / 100));
+      const bEnroll = Math.round(bPool * (bRate / 100));
+      const totalEnroll = sEnroll + aEnroll + bEnroll;
+
+      const grossRevenue = totalEnroll * tuition;
+      const perfFee = Math.round(grossRevenue * 0.20);
+      const totalCost = SETUP_FEE_KRW + perfFee;
+      const netProfit = grossRevenue - totalCost;
+      const roiMultiple = totalCost > 0 ? (grossRevenue / totalCost).toFixed(1) : '0.0';
+
+      const formatEokMan = (krw) => {
+        const man = Math.round(krw / 10000);
+        if (Math.abs(man) >= 10000) {
+          const eok = Math.floor(Math.abs(man) / 10000);
+          const remMan = Math.abs(man) % 10000;
+          const sign = man < 0 ? '-' : '';
+          return `${sign}${eok}억 ${remMan > 0 ? remMan.toLocaleString() + '만 ' : ''}원`;
+        }
+        return `${man.toLocaleString()}만 원`;
+      };
+
+      document.getElementById('roiGrossRevenue').textContent = formatEokMan(grossRevenue);
+      document.getElementById('roiRecoveredStudents').textContent = `총 ${totalEnroll.toLocaleString()}명 복학·학위취득`;
+
+      document.getElementById('roiTotalCost').textContent = formatEokMan(totalCost);
+      document.getElementById('roiCostSplit').textContent = `구축 1,500만 + 성과 ${Math.round(perfFee / 10000).toLocaleString()}만`;
+
+      document.getElementById('roiNetProfit').textContent = formatEokMan(netProfit);
+      document.getElementById('roiMultipleBadge').textContent = `총 비용 대비 ${roiMultiple}배 매출`;
+
+      // Horizontal Stacked Bar Percentages
+      if (grossRevenue > 0) {
+        const netPct = Math.max(0, (netProfit / grossRevenue) * 100);
+        const perfPct = (perfFee / grossRevenue) * 100;
+        const setupPct = Math.min(100 - netPct - perfPct, (SETUP_FEE_KRW / grossRevenue) * 100);
+
+        document.getElementById('barNetUniv').style.width = `${netPct.toFixed(1)}%`;
+        document.getElementById('barPerfFee').style.width = `${perfPct.toFixed(1)}%`;
+        document.getElementById('barSetupFee').style.width = `${Math.max(2, setupPct).toFixed(1)}%`;
+
+        document.getElementById('pctNetUniv').textContent = `${netPct.toFixed(1)}%`;
+        document.getElementById('pctPerfFee').textContent = `${perfPct.toFixed(1)}%`;
+        document.getElementById('pctSetupFee').textContent = `${setupPct.toFixed(1)}%`;
+      }
+
+      // Tier Breakdown Table
+      const tiers = [
+        { name: '최우선(S) — 수료 및 잔여 12학점 이하', pool: sPool, rate: sRate, enroll: sEnroll, rev: sEnroll * tuition, badge: 'bg-emerald-50 text-emerald-700' },
+        { name: '유망(A) — 이수율 75% 이상 최근 휴학·제적', pool: aPool, rate: aRate, enroll: aEnroll, rev: aEnroll * tuition, badge: 'bg-indigo-50 text-indigo-700' },
+        { name: '중장기(B) — 성인학습자·학점은행 연계 대상', pool: bPool, rate: bRate, enroll: bEnroll, rev: bEnroll * tuition, badge: 'bg-slate-100 text-slate-700' }
+      ];
+
+      document.getElementById('roiTierTableBody').innerHTML = tiers.map(t => `
+        <tr>
+          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded font-bold ${t.badge}">${t.name}</span></td>
+          <td class="py-3 px-4 font-semibold text-slate-700">${t.pool.toLocaleString()}명</td>
+          <td class="py-3 px-4 font-bold text-indigo-600">${t.rate}%</td>
+          <td class="py-3 px-4 font-bold text-slate-900">${t.enroll.toLocaleString()}명</td>
+          <td class="py-3 px-4 text-right font-bold text-emerald-700">${formatEokMan(t.rev)}</td>
+        </tr>
+      `).join('');
+    }
+
+    ['roiPoolSlider', 'roiTuitionSlider', 'roiSRateSlider', 'roiARateSlider'].forEach(id => {
+      document.getElementById(id).addEventListener('input', renderRoiSimulator);
+    });
+
+    // -------------------------------------------------------------------------
+    // Global Controls: Entry Gate, Sidebar Tabs, PII Masking, File Upload & Export
+    // -------------------------------------------------------------------------
+    function applyUniversityName(name) {
+      const clean = name.trim() || '충청미래대학교';
+      state.univName = clean;
+      document.getElementById('headerUnivTitle').textContent = clean;
+      document.getElementById('gateUnivName').value = clean;
+
+      // Refresh draft messages with updated university name
+      state.students.forEach(st => {
+        st.customMessage = generateAlimTalkTemplate(clean, st, st);
+      });
+      renderReenrollModule();
+    }
+
+    document.getElementById('btnEnterWorkspace').addEventListener('click', () => {
+      applyUniversityName(document.getElementById('gateUnivName').value);
+      document.getElementById('entryGateModal').classList.add('hidden');
+      showToast(`${state.univName} 워크스페이스에 입장했습니다.`, 'success');
+    });
+
+    document.getElementById('btnReopenGate').addEventListener('click', () => {
+      document.getElementById('entryGateModal').classList.remove('hidden');
+    });
+
+    // Sidebar Navigation Switching
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.dataset.tab;
+        state.activeTab = targetTab;
+
+        document.querySelectorAll('.nav-tab-btn').forEach(b => {
+          const isActive = b.dataset.tab === targetTab;
+          b.className = isActive
+            ? 'nav-tab-btn w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-left text-sm font-semibold transition bg-indigo-600 text-white shadow-md shadow-indigo-950/50'
+            : 'nav-tab-btn w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-left text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition';
+        });
+
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+          panel.classList.toggle('hidden', panel.id !== `tab-${targetTab}`);
+        });
+
+        if (window.innerWidth < 1024) {
+          document.getElementById('sidebarNav').classList.add('hidden');
+        }
+        lucide.createIcons();
+      });
+    });
+
+    document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+      document.getElementById('sidebarNav').classList.toggle('hidden');
+    });
+
+    // PII Local Masking Toggle
+    document.getElementById('btnTogglePiiMask').addEventListener('click', () => {
+      state.piiUnmasked = !state.piiUnmasked;
+      const icon = document.getElementById('piiLockIcon');
+      const label = document.getElementById('piiToggleLabel');
+
+      if (state.piiUnmasked) {
+        icon.setAttribute('data-lucide', 'unlock');
+        icon.classList.remove('text-emerald-400');
+        icon.classList.add('text-amber-400');
+        label.textContent = '로컬 실명 마스킹 잠금';
+        showToast('로컬 브라우저 메모리에서 실명 및 연락처 마스킹이 해제되었습니다.', 'info');
+      } else {
+        icon.setAttribute('data-lucide', 'lock');
+        icon.classList.remove('text-amber-400');
+        icon.classList.add('text-emerald-400');
+        label.textContent = '로컬 실명 마스킹 해제';
+        showToast('보안 모드: 로컬 실명 및 연락처가 마스킹 잠금되었습니다.', 'success');
+      }
+      renderReenrollModule();
+    });
+
+    // Search, Status Pills & Min Completion Slider
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      state.searchQuery = e.target.value;
+      renderReenrollModule();
+    });
+
+    document.getElementById('minCompletionSlider').addEventListener('input', (e) => {
+      state.minCompletion = Number(e.target.value) || 0;
+      document.getElementById('minCompletionLabel').textContent = `${state.minCompletion}%`;
+      renderReenrollModule();
+    });
+
+    document.querySelectorAll('.status-pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.statusFilter = btn.dataset.status;
+        document.querySelectorAll('.status-pill-btn').forEach(p => {
+          const active = p.dataset.status === state.statusFilter;
+          p.className = active
+            ? 'status-pill-btn px-3 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-white transition cursor-pointer'
+            : 'status-pill-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer';
+        });
+        renderReenrollModule();
+      });
+    });
+
+    // Select All & Batch Approval
+    document.getElementById('selectAllCheckbox').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      getFilteredStudents().forEach(st => { st.checked = checked; });
+      renderReenrollModule();
+    });
+
+    document.getElementById('btnBatchApprove').addEventListener('click', () => {
+      const checkedList = getFilteredStudents().filter(s => s.checked);
+      if (checkedList.length === 0) {
+        showToast('일괄 결재승인할 대상자를 먼저 체크해 주세요.', 'error');
         return;
       }
-      const csvRows = [
-        ["record_key", "dept_name", "status_code", "remain_credits", "priority", "approval_status", "draft_message"].join(","),
-        ...approved.map(r => [
-          r.record_key,
-          r.dept_name,
-          r.status_code,
-          r.remain_credits,
-          r.priority,
-          r.approval_status,
-          `"${(r.draft_message || "").replace(/"/g, '""')}"`
-        ].join(","))
-      ];
-      const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      checkedList.forEach(s => {
+        s.approval = '결재승인';
+        s.checked = false;
+      });
+      document.getElementById('selectAllCheckbox').checked = false;
+      renderReenrollModule();
+      showToast(`선택된 ${checkedList.length}건이 일괄 '처장 결재승인' 처리되었습니다.`, 'success');
+    });
+
+    // Sample CSV Download
+    document.getElementById('btnDownloadSampleCsv').addEventListener('click', () => {
+      const headers = ['비식별ID', '성명', '연락처', '학과', '학적상태', '이수학점', '졸업기준학점', '이탈경과년수', '평점'];
+      const rows = INITIAL_SAMPLE_DATA.map(d => [
+        d.anonId, d.fullName, d.fullPhone, d.dept, d.status, d.earned, d.req, d.elapsedYears, d.gpa
+      ]);
+      const csvContent = '\uFEFF' + [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = "approved_reentry_targets.csv";
+      a.download = 'ReCampus_AI_표준학적샘플.csv';
       a.click();
       URL.revokeObjectURL(url);
+      showToast('표준 학적 샘플 CSV 파일이 다운로드되었습니다.', 'info');
     });
+
+    // Export Approved CSV
+    document.getElementById('btnExportApprovedCsv').addEventListener('click', () => {
+      const approved = state.students.filter(s => s.approval === '결재승인');
+      if (approved.length === 0) {
+        showToast('내보낼 처장 결재승인 명단이 없습니다.', 'error');
+        return;
+      }
+      const headers = ['비식별ID', '로컬성명', '로컬연락처', '학과', '학적상태', '이수학점', '졸업기준학점', '잔여학점', 'AI점수', '등급', '결재상태', '발송안내문구'];
+      const rows = approved.map(s => {
+        const pii = localPiiVault.get(s.anonId) || {};
+        const nameVal = state.piiUnmasked ? pii.fullName : pii.maskedName;
+        const phoneVal = state.piiUnmasked ? pii.fullPhone : pii.maskedPhone;
+        return [
+          s.anonId, nameVal, phoneVal, s.dept, s.status, s.earned, s.req, s.remainCredits, s.totalScore, s.tierLabel, s.approval, s.customMessage
+        ];
+      });
+      const csvContent = '\uFEFF' + [headers, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${state.univName}_결재승인_복학대상명단.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`결재승인 명단 ${approved.length}건이 CSV로 내보내졌습니다.`, 'success');
+    });
+
+    // Real Excel (.xlsx/.xls) & CSV File Upload via SheetJS
+    document.getElementById('excelCsvUpload').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonRows = XLSX.utils.sheet_to_json(sheet);
+
+          if (!jsonRows || jsonRows.length === 0) {
+            showToast('업로드한 파일에 유효한 데이터 행이 없습니다.', 'error');
+            return;
+          }
+
+          const pick = (row, keys, fallback) => {
+            for (const k of keys) {
+              if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') return row[k];
+            }
+            return fallback;
+          };
+
+          const parsedList = jsonRows.map((row, idx) => {
+            const rawName = String(pick(row, ['성명', '이름', 'name', 'student_name'], `학생${idx + 1}`)).trim();
+            const rawPhone = String(pick(row, ['연락처', '휴대폰', '전화번호', 'phone'], '010-****-0000')).trim();
+            const rawStatus = String(pick(row, ['학적상태', '학적구분', 'status', 'status_code'], '일반휴학')).trim();
+
+            let normStatus = '일반휴학';
+            if (rawStatus.includes('수료')) normStatus = '수료';
+            else if (rawStatus.includes('미등록') || rawStatus.includes('제적')) normStatus = '미등록제적';
+            else if (rawStatus.includes('자퇴')) normStatus = '자퇴';
+
+            return {
+              anonId: String(pick(row, ['비식별ID', '식별키', '학번', 'record_key', 'id'], `UP-2027-${String(idx + 1).padStart(2, '0')}`)).trim(),
+              fullName: rawName,
+              maskedName: maskKoreanName(rawName),
+              fullPhone: rawPhone,
+              maskedPhone: maskPhoneNumber(rawPhone),
+              dept: String(pick(row, ['학과', '소속학과', '전공', 'dept', 'dept_name'], '스마트물류과')).trim(),
+              status: normStatus,
+              earned: Number(pick(row, ['이수학점', '취득학점', 'earned', 'earned_credits'], 96)) || 0,
+              req: Number(pick(row, ['졸업기준학점', '기준학점', 'req', 'req_credits'], 130)) || 130,
+              elapsedYears: Number(pick(row, ['이탈경과년수', '이탈연수', '경과년수', 'elapsed_years'], 1)) || 1,
+              gpa: Number(pick(row, ['평점', '평균평점', 'gpa'], 3.2)) || 3.0,
+              approval: '검토대기'
+            };
+          });
+
+          hydrateStudentRecords(parsedList, `${file.name} (${parsedList.length}건)`);
+          showToast(`'${file.name}' (${parsedList.length}건) 로컬 분석이 완료되었습니다.`, 'success');
+        } catch (_) {
+          showToast('파일 파싱 중 오류가 발생했습니다. XLSX 또는 CSV 형식을 확인해 주세요.', 'error');
+        } finally {
+          e.target.value = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    // -------------------------------------------------------------------------
+    // Initial Bootstrap
+    // -------------------------------------------------------------------------
+    hydrateStudentRecords(INITIAL_SAMPLE_DATA, '표준 샘플 DB');
+    renderCreditTransferModule();
+    renderRplModule();
+    renderRoiSimulator();
+    lucide.createIcons();
   </script>
 </body>
 </html>
