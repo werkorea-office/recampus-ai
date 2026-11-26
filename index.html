@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>대학 복학·수료생 발굴 지원 워크스페이스 (분리형 MVP)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+  <div class="max-w-7xl mx-auto p-4 md:p-6">
+    <!-- 상단 헤더 -->
+    <div class="bg-white rounded-xl border border-slate-200 p-5 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>
+        <div class="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 mb-1">
+          개인정보 서버 미저장 · 학교-시스템 완전 분리 구조
+        </div>
+        <h1 class="text-xl md:text-2xl font-bold text-slate-900">
+          복학·수료생 대상 선별 및 교내 결재 워크스페이스
+        </h1>
+        <p class="text-xs md:text-sm text-slate-500 mt-0.5">
+          실명·연락처는 브라우저 로컬 메모리에만 유지되고, 비식별 학사 지표만 분석하여 안내 초안과 결재 흐름을 지원합니다.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="btnSample" type="button" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium">
+          시연용 샘플 불러오기
+        </button>
+        <button id="btnAnalyze" type="button" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">
+          대상 선별 및 초안 생성
+        </button>
+      </div>
+    </div>
+
+    <!-- 학사 ERP 스타일 조회·기준 바 -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">대학명</label>
+        <input id="univName" type="text" value="충청미래대학교" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">연간 기준 등록금 (원)</label>
+        <input id="tuitionKrw" type="number" value="6800000" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">학적구분 필터</label>
+        <select id="filterStatus" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm bg-white">
+          <option value="ALL">전체 (수료·휴학·제적·자퇴)</option>
+          <option value="수료">수료</option>
+          <option value="일반휴학">일반휴학</option>
+          <option value="미등록제적">미등록제적</option>
+          <option value="자퇴">자퇴</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">최소 이수율 (%)</label>
+        <input id="minRate" type="number" value="0" min="0" max="100" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">CSV 업로드 (선택)</label>
+        <input id="csvFile" type="file" accept=".csv" class="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs bg-slate-50" />
+      </div>
+    </div>
+
+    <!-- 요약 카드 -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="text-xs text-slate-500">조회 대상 인원</div>
+        <div id="mTotal" class="text-2xl font-bold mt-1">0명</div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="text-xs text-slate-500">최우선(S) / 유망(A)</div>
+        <div id="mSA" class="text-2xl font-bold text-blue-600 mt-1">0 / 0명</div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="text-xs text-slate-500">보수적 예상 등록 인원</div>
+        <div id="mEnroll" class="text-2xl font-bold text-emerald-600 mt-1">0명</div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="text-xs text-slate-500">예상 성과보수 (20% 기준)</div>
+        <div id="mFee" class="text-2xl font-bold text-indigo-600 mt-1">0원</div>
+      </div>
+    </div>
+
+    <!-- 결재 액션 바 -->
+    <div class="bg-white rounded-xl border border-slate-200 p-3.5 mb-4 flex flex-wrap items-center justify-between gap-2">
+      <div class="text-xs text-slate-600">
+        체크된 대상자에 대해 <strong>실무자 검토 → 처장/단장 결재 승인</strong> 상태를 반영합니다. (실제 발송은 학교 발송망에서 진행)
+      </div>
+      <div class="flex gap-2">
+        <button id="btnApprove" type="button" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">
+          선택 항목 결재 승인
+        </button>
+        <button id="btnExport" type="button" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold">
+          승인 목록 CSV 내보내기
+        </button>
+      </div>
+    </div>
+
+    <!-- 그리드 테이블 -->
+    <div class="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200 text-xs text-slate-600">
+          <tr>
+            <th class="p-3 w-10"><input id="checkAll" type="checkbox" /></th>
+            <th class="p-3">식별키(비식별)</th>
+            <th class="p-3">학과</th>
+            <th class="p-3">학적구분</th>
+            <th class="p-3">이수/기준(잔여)</th>
+            <th class="p-3">경과/평점</th>
+            <th class="p-3">우선순위</th>
+            <th class="p-3">결재상태</th>
+            <th class="p-3 min-w-[300px]">맞춤 안내 초안</th>
+          </tr>
+        </thead>
+        <tbody id="gridBody" class="divide-y divide-slate-100">
+          <tr>
+            <td colspan="9" class="p-8 text-center text-slate-400">
+              상단의 <strong>시연용 샘플 불러오기</strong> 또는 <strong>CSV 업로드</strong> 후 <strong>대상 선별 및 초안 생성</strong>을 눌러주세요.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const SAMPLE_DATA = [
+      { record_key: "K-101", dept_name: "스마트물류과", status_code: "수료", earned_credits: 126, req_credits: 130, elapsed_years: 1, gpa: 3.4 },
+      { record_key: "K-102", dept_name: "호텔관광경영과", status_code: "일반휴학", earned_credits: 102, req_credits: 130, elapsed_years: 1, gpa: 3.2 },
+      { record_key: "K-103", dept_name: "AI소프트웨어과", status_code: "미등록제적", earned_credits: 98, req_credits: 130, elapsed_years: 2, gpa: 3.1 },
+      { record_key: "K-104", dept_name: "간호학과", status_code: "수료", earned_credits: 138, req_credits: 140, elapsed_years: 1, gpa: 3.6 },
+      { record_key: "K-105", dept_name: "사회복지상담과", status_code: "자퇴", earned_credits: 72, req_credits: 130, elapsed_years: 3, gpa: 2.8 },
+      { record_key: "K-106", dept_name: "자동차기계과", status_code: "일반휴학", earned_credits: 80, req_credits: 120, elapsed_years: 2, gpa: 2.9 }
+    ];
+
+    let rawRecords = [...SAMPLE_DATA];
+    let analyzedItems = [];
+
+    function getFilteredRecords() {
+      const st = document.getElementById("filterStatus").value;
+      const minRate = Number(document.getElementById("minRate").value || 0);
+      return rawRecords.filter(r => {
+        const rate = r.req_credits > 0 ? (r.earned_credits / r.req_credits) * 100 : 0;
+        const okStatus = (st === "ALL") || (r.status_code === st);
+        const okRate = rate >= minRate;
+        return okStatus && okRate;
+      });
+    }
+
+    function renderGrid() {
+      const tbody = document.getElementById("gridBody");
+      if (!analyzedItems.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400">표시할 데이터가 없습니다.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = analyzedItems.map((it, idx) => `
+        <tr class="hover:bg-slate-50 align-top">
+          <td class="p-3"><input type="checkbox" class="row-check" data-idx="${idx}" /></td>
+          <td class="p-3 font-mono text-xs text-slate-600">${it.record_key}</td>
+          <td class="p-3 font-medium">${it.dept_name}</td>
+          <td class="p-3">${it.status_code}</td>
+          <td class="p-3">${it.earned_credits}/${it.req_credits} <span class="text-xs text-slate-500">(잔여 ${it.remain_credits})</span></td>
+          <td class="p-3 text-xs">${it.elapsed_years}년 / 평점 ${it.gpa}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700">${it.priority} (${it.score}점)</span></td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded text-xs font-semibold ${it.approval_status === '결재승인' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+              ${it.approval_status}
+            </span>
+          </td>
+          <td class="p-3 text-xs text-slate-700 leading-relaxed">${it.draft_message}</td>
+        </tr>
+      `).join("");
+    }
+
+    document.getElementById("btnSample").addEventListener("click", () => {
+      rawRecords = [...SAMPLE_DATA];
+      alert("시연용 샘플 6건이 로드되었습니다. '대상 선별 및 초안 생성'을 눌러보세요.");
+    });
+
+    document.getElementById("csvFile").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      const lines = text.trim().split(/\r?\n/);
+      if (lines.length < 2) return;
+      const headers = lines[0].split(",").map(h => h.trim());
+      rawRecords = lines.slice(1).map((line, i) => {
+        const cols = line.split(",").map(c => c.trim());
+        const obj = {};
+        headers.forEach((h, idx) => obj[h] = cols[idx]);
+        return {
+          record_key: obj.record_key || `ROW-${i + 1}`,
+          dept_name: obj.dept_name || "미지정학과",
+          status_code: obj.status_code || "일반휴학",
+          earned_credits: Number(obj.earned_credits || 0),
+          req_credits: Number(obj.req_credits || 130),
+          elapsed_years: Number(obj.elapsed_years || 1),
+          gpa: Number(obj.gpa || 3.0)
+        };
+      });
+      alert(`CSV ${rawRecords.length}건이 로드되었습니다.`);
+    });
+
+    document.getElementById("btnAnalyze").addEventListener("click", async () => {
+      const targets = getFilteredRecords();
+      if (!targets.length) {
+        alert("조회 조건에 맞는 대상이 없습니다.");
+        return;
+      }
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          univ_name: document.getElementById("univName").value,
+          tuition_krw: Number(document.getElementById("tuitionKrw").value || 6800000),
+          records: targets
+        })
+      });
+      const data = await res.json();
+      analyzedItems = data.items;
+
+      document.getElementById("mTotal").innerText = `${data.summary.total_count}명`;
+      document.getElementById("mSA").innerText = `${data.summary.s_count} / ${data.summary.a_count}명`;
+      document.getElementById("mEnroll").innerText = `${data.summary.est_enroll}명`;
+      document.getElementById("mFee").innerText = `${Math.round(data.summary.est_success_fee / 10000).toLocaleString()}만 원`;
+
+      renderGrid();
+    });
+
+    document.getElementById("checkAll").addEventListener("change", (e) => {
+      document.querySelectorAll(".row-check").forEach(cb => cb.checked = e.target.checked);
+    });
+
+    document.getElementById("btnApprove").addEventListener("click", () => {
+      let changed = 0;
+      document.querySelectorAll(".row-check:checked").forEach(cb => {
+        const idx = Number(cb.dataset.idx);
+        if (analyzedItems[idx]) {
+          analyzedItems[idx].approval_status = "결재승인";
+          changed++;
+        }
+      });
+      if (!changed) {
+        alert("결재 승인할 행을 체크해 주세요.");
+        return;
+      }
+      renderGrid();
+    });
+
+    document.getElementById("btnExport").addEventListener("click", () => {
+      const approved = analyzedItems.filter(i => i.approval_status === "결재승인");
+      if (!approved.length) {
+        alert("내보낼 '결재승인' 항목이 없습니다.");
+        return;
+      }
+      const csvRows = [
+        ["record_key", "dept_name", "status_code", "remain_credits", "priority", "approval_status", "draft_message"].join(","),
+        ...approved.map(r => [
+          r.record_key,
+          r.dept_name,
+          r.status_code,
+          r.remain_credits,
+          r.priority,
+          r.approval_status,
+          `"${(r.draft_message || "").replace(/"/g, '""')}"`
+        ].join(","))
+      ];
+      const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "approved_reentry_targets.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
